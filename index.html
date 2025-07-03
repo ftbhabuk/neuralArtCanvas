@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Symphony - AI Visualization</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@300;400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: radial-gradient(ellipse at center, #0a0a1a 0%, #000000 70%);
+            font-family: 'Orbitron', monospace;
+            overflow: hidden;
+            color: #00ffaa;
+            position: relative;
+        }
+
+        .bg-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(0, 255, 170, 0.3);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) translateX(0px); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100px) translateX(100px); opacity: 0; }
+        }
+
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            z-index: 2;
+        }
+
+        #canvas {
+            display: block;
+            background: transparent;
+            cursor: crosshair;
+        }
+
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            background: linear-gradient(135deg, rgba(0, 20, 40, 0.9), rgba(0, 10, 30, 0.95));
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(0, 255, 170, 0.3);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 255, 170, 0.1);
+            min-width: 280px;
+            transition: all 0.3s ease;
+        }
+
+        #controls:hover {
+            border-color: rgba(0, 255, 170, 0.6);
+            box-shadow: 0 12px 40px rgba(0, 255, 170, 0.2);
+        }
+
+        .control-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #00ffaa;
+            margin-bottom: 15px;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(0, 255, 170, 0.5);
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(0, 255, 170, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 170, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 400;
+            color: #88ffcc;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(to right, rgba(0, 255, 170, 0.2), rgba(0, 255, 170, 0.6));
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: radial-gradient(circle, #00ffaa, #00cc88);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 255, 170, 0.5);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: radial-gradient(circle, #00ffaa, #00cc88);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 10px rgba(0, 255, 170, 0.5);
+        }
+
+        .range-value {
+            font-size: 11px;
+            color: #00ffaa;
+            text-align: center;
+            margin-top: 5px;
+            font-weight: 300;
+        }
+
+        button {
+            background: linear-gradient(135deg, rgba(0, 30, 60, 0.8), rgba(0, 20, 40, 0.9));
+            border: 2px solid rgba(0, 255, 170, 0.4);
+            color: #00ffaa;
+            padding: 8px 128px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-size: 11px;
+            font-weight: 400;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 170, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        button:hover:before {
+            left: 100%;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, rgba(0, 255, 170, 0.2), rgba(0, 200, 150, 0.3));
+            border-color: #00ffaa;
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 255, 170, 0.4);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.active {
+            background: linear-gradient(135deg, rgba(0, 255, 170, 0.3), rgba(0, 200, 150, 0.4));
+            border-color: #00ffaa;
+            color: #ffffff;
+            box-shadow: 0 0 15px rgba(0, 255, 170, 0.6);
+        }
+
+        #status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, rgba(0, 20, 40, 0.9), rgba(0, 10, 30, 0.95));
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(0, 255, 170, 0.3);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 255, 170, 0.1);
+            min-width: 300px;
+            font-size: 12px;
+            z-index: 100;
+        }
+
+        .status-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #00ffaa;
+            margin-bottom: 15px;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(0, 255, 170, 0.5);
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(0, 255, 170, 0.1);
+        }
+
+        .status-label {
+            color: #88ffcc;
+            font-weight: 300;
+        }
+
+        .status-value {
+            color: #00ffaa;
+            font-weight: 400;
+        }
+
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: rgba(0, 255, 170, 0.7);
+            text-align: center;
+            font-weight: 300;
+            text-shadow: 0 0 10px rgba(0, 255, 170, 0.3);
+            z-index: 100;
+        }
+
+        #spectrum {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 300px;
+            height: 100px;
+            background: linear-gradient(135deg, rgba(0, 20, 40, 0.9), rgba(0, 10, 30, 0.95));
+            border-radius: 10px;
+            border: 2px solid rgba(0, 255, 170, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 10px;
+            z-index: 100;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #00ffaa;
+            font-size: 18px;
+            text-align: center;
+            z-index: 1000;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 255, 170, 0.3);
+            border-top: 3px solid #00ffaa;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            #controls, #status {
+                position: relative;
+                margin: 10px;
+                width: calc(100% - 20px);
+            }
+            
+            #info {
+                position: relative;
+                margin: 20px;
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-particles" id="bgParticles"></div>
+
+    <div id="container">
+        <canvas id="canvas"></canvas>
+        
+        <div id="controls">
+            <div class="control-title">⚡ NEURAL SYMPHONY</div>
+            
+            <div class="control-group">
+                <div class="button-group">
+                    <button id="audioBtn">🎵 Audio Mode</button>
+                    <button id="autoBtn">🤖 Auto Mode</button>
+                    <button>🔄 Reset</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Network Complexity</label>
+                <input type="range" id="networkSize" min="50" max="300" value="150">
+                <div class="range-value" id="networkSizeValue">150 Nodes</div>
+            </div>
+
+            <div class="control-group">
+                <label>Data Flow Velocity</label>
+                <input type="range" id="flowSpeed" min="0.5" max="8" value="3" step="0.1">
+                <div class="range-value" id="flowSpeedValue">3.0x</div>
+            </div>
+
+            <div class="control-group">
+                <label>Neural Sensitivity</label>
+                <input type="range" id="activationRate" min="0.1" max="1" value="0.4" step="0.05">
+                <div class="range-value" id="activationRateValue">40%</div>
+            </div>
+
+            <div class="control-group">
+                <label>Visual Intensity</label>
+                <input type="range" id="visualIntensity" min="0.5" max="2" value="1" step="0.1">
+                <div class="range-value" id="visualIntensityValue">100%</div>
+            </div>
+        </div>
+
+        <div id="status">
+            <div class="status-title">🧠 NEURAL STATUS</div>
+            <div class="status-item">
+                <span class="status-label">Mode:</span>
+                <span class="status-value" id="currentMode">Initializing...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Active Nodes:</span>
+                <span class="status-value" id="activeNodes">0</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Data Pulses:</span>
+                <span class="status-value" id="activePulses">0</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Network Activity:</span>
+                <span class="status-value" id="networkActivity">0%</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Dominant Frequency:</span>
+                <span class="status-value" id="dominantFreq">0 Hz</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Audio Level:</span>
+                <span class="status-value" id="audioLevel">0</span>
+            </div>
+        </div>
+
+        <div id="info">
+            ✨ Click anywhere to send neural impulses • Experience the dance of artificial intelligence ✨
+        </div>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div>Initializing Neural Network...</div>
+    </div>
+
+    <script src="neural-symphony.js"></script>
+</body>
+</html>
